@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"os"
 )
 
 func main() {
@@ -18,10 +19,14 @@ func main() {
 }
 
 func CreateTCP() (chan string) {
-	out := make(chan string)
+  args := os.Args
+  if len(args) != 2 {
+    fmt.Println("Usage: go run main.go <address> <port>")
+  }
+  out := make(chan string)
   conns := make([]net.Conn, 0)
 	go func() {
-		listener, err := net.Listen("tcp", "localhost:8080")
+    listener, err := net.Listen("tcp", args[1] + ":" + args[2])
 		if err != nil {
 			log.Fatal("Error!")
 		}
