@@ -13,31 +13,31 @@ func main() {
 	for {
 		select {
 		case msg := <-out:
-      fmt.Println("Received message: ", msg)
+			fmt.Println("Received message: ", msg)
 		}
 	}
 }
 
-func CreateTCP() (chan string) {
-  args := os.Args
-  if len(args) != 2 {
-    fmt.Println("Usage: go run main.go <address> <port>")
-  }
-  out := make(chan string)
-  conns := make([]net.Conn, 0)
+func CreateTCP() chan string {
+	args := os.Args
+	if len(args) != 2 {
+		fmt.Println("Usage: go run main.go <address> <port>")
+	}
+	out := make(chan string)
+	conns := make([]net.Conn, 0)
 	go func() {
-    listener, err := net.Listen("tcp", args[1] + ":" + args[2])
+		listener, err := net.Listen("tcp", args[1]+":"+args[2])
 		if err != nil {
 			log.Fatal("Error!")
 		}
 		defer listener.Close()
 		for {
 			conn, err := listener.Accept()
-      conns = append(conns, conn)
+			conns = append(conns, conn)
 			if err != nil {
 				log.Fatal("Error!")
 			}
-			go func(conn net.Conn){
+			go func(conn net.Conn) {
 				defer conn.Close()
 				for {
 					buf := make([]byte, 1024)
@@ -46,9 +46,9 @@ func CreateTCP() (chan string) {
 						fmt.Println("Error!")
 						return
 					}
-          for _, c := range filter(conns, func(conn1 net.Conn) bool { return conn1 != conn }){
-            c.Write(buf[:n])
-          }
+					for _, c := range filter(conns, func(conn1 net.Conn) bool { return conn1 != conn }) {
+						c.Write(buf[:n])
+					}
 					out <- string(buf[:n])
 				}
 			}(conn)
@@ -56,12 +56,13 @@ func CreateTCP() (chan string) {
 	}()
 	return out
 }
-func filter[T any](array []T, f func(T) bool) ([]T) {
-  new := make([]T, 0)
-  for _, v := range array {
-    if f(v) {
-      new = append(new, v)
-    }
-  }
-  return new
+
+func filter[T any](array []T, f func(T) bool) []T {
+	new := make([]T, 0)
+	for _, v := range array {
+		if f(v) {
+			new = append(new, v)
+		}
+	}
+	return new
 }
