@@ -58,12 +58,16 @@ func CreateTCP(args []string) chan string {
 						return
 					}
 
-					message := tryDecodeJson(buf[:n])
+					message, err := tryDecodeJson(buf[:n])
+					if err != nil {
+						fmt.Println("Error decoding JSON:", err)
+						continue
+					}
 					if !contains(conns[message.Chatroom], conn) {
-            conns[message.Chatroom] = append(conns[message.Chatroom], conn)
-          }
+						conns[message.Chatroom] = append(conns[message.Chatroom], conn)
+					}
 
-          for _, c := range filter(conns[message.Chatroom], func(conn1 net.Conn) bool { return conn1 != conn }) {
+					for _, c := range filter(conns[message.Chatroom], func(conn1 net.Conn) bool { return conn1 != conn }) {
 						c.Write([]byte(message.Username + ": " + message.Text))
 					}
 
@@ -90,13 +94,13 @@ type Message struct {
 	Username string `json:"username"`
 }
 
-func tryDecodeJson(s []byte) Message {
+func tryDecodeJson(s []byte) (Message, error) {
 	var m Message
 	err := json.Unmarshal(s, &m)
 	if err != nil {
-		fmt.Println("Error decoding json", err)
+		return m, err
 	}
-	return m
+	return m, nil
 }
 
 func filter[T any](array []T, f func(T) bool) []T {
