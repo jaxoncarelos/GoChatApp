@@ -17,7 +17,11 @@ import (
 )
 
 func main() {
-	out := CreateTCP()
+  args := os.Args
+	if len(args) < 3 {
+		fmt.Println("Usage: go run main.go <address> <port>")
+	}
+  out := CreateTCP(args[1:])
 
 	for {
 		select {
@@ -27,11 +31,7 @@ func main() {
 	}
 }
 
-func CreateTCP() chan string {
-	args := os.Args
-	if len(args) < 3 {
-		fmt.Println("Usage: go run main.go <address> <port>")
-	}
+func CreateTCP(args []string) chan string {
 	out := make(chan string)
 	conns := make([]net.Conn, 0)
 	fmt.Println("Listening on " + args[1] + ":" + args[2])
@@ -68,6 +68,7 @@ func CreateTCP() chan string {
 	}()
 	return out
 }
+
 
 func filter[T any](array []T, f func(T) bool) []T {
 	new := make([]T, 0)
