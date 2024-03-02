@@ -2,14 +2,11 @@ package main
 
 // 1 implement tcp server
 // 2 do documentation
-// 3 idk what else 
+// 3 idk what else
 // 4 another list item
 
-
-
-
-
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net"
@@ -17,11 +14,11 @@ import (
 )
 
 func main() {
-  args := os.Args
+	args := os.Args
 	if len(args) < 3 {
 		fmt.Println("Usage: go run main.go <address> <port>")
 	}
-  out := CreateTCP(args[1:])
+	out := CreateTCP(args[1:])
 
 	for {
 		select {
@@ -33,7 +30,8 @@ func main() {
 
 func CreateTCP(args []string) chan string {
 	out := make(chan string)
-	conns := make([]net.Conn, 0)
+	// conns := make([]net.Conn, 0)
+	conns := make(map[int][]net.Conn)
 	fmt.Println("Listening on " + args[1] + ":" + args[2])
 	go func() {
 		listener, err := net.Listen("tcp", args[1]+":"+args[2])
@@ -43,7 +41,7 @@ func CreateTCP(args []string) chan string {
 		defer listener.Close()
 		for {
 			conn, err := listener.Accept()
-			conns = append(conns, conn)
+			conns[-1] = append(conns[-1], conn)
 			if err != nil {
 				log.Fatal("Error!")
 				continue
@@ -58,10 +56,11 @@ func CreateTCP(args []string) chan string {
 						fmt.Println("Error!")
 						return
 					}
-					for _, c := range filter(conns, func(conn1 net.Conn) bool { return conn1 != conn }) {
-						c.Write(buf[:n])
+					message := tryDecodeJson(buf[:n])
+					for _, c := range filter(conns[message.Chatroom], func(conn1 net.Conn) bool { return conn1 != conn }) {
+						c.Write([]byte(message.Username + ":" + message.Text))
 					}
-					out <- string(buf[:n])
+          out <- message.Username + ":" + message.Text
 				}
 			}(conn)
 		}
@@ -69,6 +68,20 @@ func CreateTCP(args []string) chan string {
 	return out
 }
 
+type Message struct {
+  Chatroom int `json:"chatroom"`
+	Text     string `json:"text"`
+	Username string `json:"username"`
+}
+
+func tryDecodeJson(s []byte) Message {
+	var m Message
+  err := json.Unmarshal(s, &m)
+	if err != nil {
+		fmt.Println("Error decoding json")
+	}
+	return m
+}
 
 func filter[T any](array []T, f func(T) bool) []T {
 	new := make([]T, 0)
