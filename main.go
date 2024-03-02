@@ -48,7 +48,8 @@ func CreateTCP(args []string) chan string {
 			}
 			go func(conn net.Conn) {
 				defer conn.Close()
-				conn.Write([]byte("A person has joined the chatroom\n"))
+				conn.Write([]byte("A person has joined the chatroom"))
+
 				for {
 					buf := make([]byte, 1024)
 					n, err := conn.Read(buf)
@@ -56,13 +57,16 @@ func CreateTCP(args []string) chan string {
 						fmt.Println("Error!", err)
 						return
 					}
+
 					message := tryDecodeJson(buf[:n])
 					if !contains(conns[message.Chatroom], conn) {
             conns[message.Chatroom] = append(conns[message.Chatroom], conn)
           }
+
           for _, c := range filter(conns[message.Chatroom], func(conn1 net.Conn) bool { return conn1 != conn }) {
 						c.Write([]byte(message.Username + ": " + message.Text))
 					}
+
 					out <- message.Username + ": " + message.Text
 				}
 			}(conn)

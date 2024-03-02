@@ -12,20 +12,24 @@ func main() {
 		fmt.Println("Usage: go run main.go <address> <port> <username>")
 		return
 	}
+
 	address := args[1]
 	port := args[2]
 	username := args[3]
+
 	listener, err := net.Dial("tcp", address+":"+port)
 	if err != nil {
 		fmt.Println("Error listening:", err.Error())
 		return
 	}
+
   fmt.Print("Enter chatroom number: ")
 	var chatroom int
   fmt.Scanln(&chatroom)
-  fmt.Println("\033[H\033[2J\nWelcome")
+  fmt.Println("\033[H\033[2JWelcome")
   listener.Write([]byte(fmt.Sprintf(`{"chatroom": %d, "text": "A person has joined the chatroom", "username": "%s"}`, chatroom, username)))
 	defer listener.Close()
+
 	go func() {
 		for {
 			read := make([]byte, 1024)
@@ -36,7 +40,7 @@ func main() {
 			fmt.Println(string(read[:n]))
 		}
 	}()
-	// clear terminal
+
 	for {
 		input := make([]byte, 1024)
 		len, err := os.Stdin.Read(input)
