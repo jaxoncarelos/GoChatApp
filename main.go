@@ -18,8 +18,8 @@ func main() {
 	if len(args) < 3 {
 		fmt.Println("Usage: go run main.go <address> <port>")
 	}
+	fmt.Println(args[1:])
 	out := CreateTCP(args[1:])
-
 	for {
 		select {
 		case msg := <-out:
@@ -32,18 +32,18 @@ func CreateTCP(args []string) chan string {
 	out := make(chan string)
 	// conns := make([]net.Conn, 0)
 	conns := make(map[int][]net.Conn)
-	fmt.Println("Listening on " + args[1] + ":" + args[2])
+	fmt.Println("Listening on " + args[0] + ":" + args[1])
 	go func() {
-		listener, err := net.Listen("tcp", args[1]+":"+args[2])
+		listener, err := net.Listen("tcp", args[0]+":"+args[1])
 		if err != nil {
-			log.Fatal("Error!")
+			log.Fatal("Error!", err)
 		}
 		defer listener.Close()
 		for {
 			conn, err := listener.Accept()
-			conns[-1] = append(conns[-1], conn)
+			// conns[-1] = append(conns[-1], conn)
 			if err != nil {
-				log.Fatal("Error!")
+				log.Fatal("Error!", err)
 				continue
 			}
 			go func(conn net.Conn) {
@@ -53,14 +53,17 @@ func CreateTCP(args []string) chan string {
 					buf := make([]byte, 1024)
 					n, err := conn.Read(buf)
 					if err != nil {
-						fmt.Println("Error!")
+						fmt.Println("Error!", err)
 						return
 					}
 					message := tryDecodeJson(buf[:n])
-					for _, c := range filter(conns[message.Chatroom], func(conn1 net.Conn) bool { return conn1 != conn }) {
-						c.Write([]byte(message.Username + ":" + message.Text))
+					if !contains(conns[message.Chatroom], conn) {
+            conns[message.Chatroom] = append(conns[message.Chatroom], conn)
+          }
+          for _, c := range filter(conns[message.Chatroom], func(conn1 net.Conn) bool { return conn1 != conn }) {
+						c.Write([]byte(message.Username + ": " + message.Text))
 					}
-          out <- message.Username + ":" + message.Text
+					out <- message.Username + ": " + message.Text
 				}
 			}(conn)
 		}
@@ -68,17 +71,26 @@ func CreateTCP(args []string) chan string {
 	return out
 }
 
+func contains(array []net.Conn, value net.Conn) bool {
+	for _, v := range array {
+		if v == value {
+			return true
+		}
+	}
+	return false
+}
+
 type Message struct {
-  Chatroom int `json:"chatroom"`
+	Chatroom int    `json:"chatroom"`
 	Text     string `json:"text"`
 	Username string `json:"username"`
 }
 
 func tryDecodeJson(s []byte) Message {
 	var m Message
-  err := json.Unmarshal(s, &m)
+	err := json.Unmarshal(s, &m)
 	if err != nil {
-		fmt.Println("Error decoding json")
+		fmt.Println("Error decoding json", err)
 	}
 	return m
 }
