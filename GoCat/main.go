@@ -31,13 +31,15 @@ func main() {
 			fmt.Println(string(read[:n]))
 		}
 	}()
-	for {
-		input := make([]byte, 1024)
-		len, err := os.Stdin.Read(input)
-		if err != nil {
-			fmt.Println("Error reading:", err.Error())
+	go func() {
+		for {
+			input := make([]byte, 1024)
+			len, err := os.Stdin.Read(input)
+			if err != nil {
+				fmt.Println("Error reading:", err.Error())
+			}
+			toSend := append([]byte(username+": "), input[:len-1]...)
+			listener.Write(toSend)
 		}
-		toSend := append([]byte(username+": "), input[:len-1]...)
-		listener.Write(toSend)
-	}
+	}()
 }
