@@ -1,10 +1,5 @@
 package main
 
-// 1 implement tcp server
-// 2 do documentation
-// 3 idk what else
-// 4 another list item
-
 import (
 	"encoding/json"
 	"fmt"
@@ -17,8 +12,8 @@ func main() {
 	args := os.Args
 	if len(args) < 3 {
 		fmt.Println("Usage: go run main.go <address> <port>")
+		return
 	}
-	fmt.Println(args[1:])
 	out := CreateTCP(args[1:])
 	for {
 		select {
@@ -30,7 +25,6 @@ func main() {
 
 func CreateTCP(args []string) chan string {
 	out := make(chan string)
-	// conns := make([]net.Conn, 0)
 	conns := make(map[int][]net.Conn)
 	fmt.Println("Listening on " + args[0] + ":" + args[1])
 	go func() {
@@ -79,15 +73,6 @@ func CreateTCP(args []string) chan string {
 	return out
 }
 
-func contains(array []net.Conn, value net.Conn) bool {
-	for _, v := range array {
-		if v == value {
-			return true
-		}
-	}
-	return false
-}
-
 type Message struct {
 	Chatroom int    `json:"chatroom"`
 	Text     string `json:"text"`
@@ -111,4 +96,13 @@ func filter[T any](array []T, f func(T) bool) []T {
 		}
 	}
 	return new
+}
+
+func contains(array []net.Conn, value net.Conn) bool {
+	for _, v := range array {
+		if v == value {
+			return true
+		}
+	}
+	return false
 }

@@ -40,15 +40,15 @@ func Test_tryDecodeJson(t *testing.T) {
 		args args
 		want Message
 	}{
-    {
-    name: "JSON Test",
-    args: args{[]byte(`{"chatroom": 1, "text": "Hello", "username": "John"}`)},
-    want: Message{1, "Hello", "John"},
-    },
-  }
+		{
+			name: "JSON Test",
+			args: args{[]byte(`{"chatroom": 1, "text": "Hello", "username": "John"}`)},
+			want: Message{1, "Hello", "John"},
+		},
+	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := tryDecodeJson(tt.args.s); !reflect.DeepEqual(got, tt.want) {
+			if got, _ := tryDecodeJson(tt.args.s); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("tryDecodeJson() = %v, want %v", got, tt.want)
 			}
 		})
